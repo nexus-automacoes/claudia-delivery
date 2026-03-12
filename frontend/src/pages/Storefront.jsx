@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import useCartStore from '../store/useCartStore';
+import CartDrawer from '../components/storefront/CartDrawer';
 import {
   ChefHat,
   UtensilsCrossed,
@@ -13,9 +15,12 @@ import {
   Truck,
   Search,
   ShoppingBag,
+  ShoppingCart,
   ArrowRight,
   Smartphone,
   Star,
+  Minus,
+  Plus,
 } from 'lucide-react';
 
 const WhatsAppIcon = ({ className }) => (
@@ -34,7 +39,9 @@ export default function Storefront() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const WHATSAPP_NUMBER = import.meta.env.VITE_RESTAURANT_WHATSAPP;
+
+  const { addItem, updateQuantity, getItemQuantity, getItemCount, openCart } = useCartStore();
+  const itemCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0));
 
   useEffect(() => {
     axios
@@ -45,20 +52,6 @@ export default function Storefront() {
       })
       .finally(() => setLoading(false));
   }, []);
-
-  const handleOrder = (product) => {
-    const msg = encodeURIComponent(
-      `Ola! Vi o cardapio de voces e quero pedir:\n\n` +
-        `*${product.name}* - ${formatCurrency(product.price)}\n\n` +
-        `Podem me informar sobre entrega?`
-    );
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
-  };
-
-  const handleOrderAll = () => {
-    const msg = encodeURIComponent(`Ola! Vi o cardapio de voces e quero fazer um pedido!`);
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
-  };
 
   const filtered = products
     .filter((p) => activeCategory === 'all' || p.category.id === activeCategory)
@@ -89,11 +82,15 @@ export default function Storefront() {
               {isOpen ? 'Aberto' : 'Fechado'}
             </div>
             <button
-              onClick={handleOrderAll}
-              className="flex items-center gap-2 bg-[#25D366] hover:bg-[#1fba59] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all shadow-sm hover:shadow-md"
+              onClick={openCart}
+              className="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 transition-colors text-gray-600"
             >
-              <WhatsAppIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Fazer Pedido</span>
+              <ShoppingCart className="w-5 h-5" />
+              {itemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {itemCount > 9 ? '9+' : itemCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -140,18 +137,18 @@ export default function Storefront() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleOrderAll}
-                className="inline-flex items-center justify-center gap-3 bg-white text-primary font-bold text-base px-7 py-3.5 rounded-xl transition-all hover:bg-white/90 shadow-lg hover:shadow-xl hover:scale-[1.02]"
-              >
-                <WhatsAppIcon className="w-5 h-5" />
-                Fazer Pedido
-              </button>
               <a
                 href="#cardapio"
+                className="inline-flex items-center justify-center gap-3 bg-white text-primary font-bold text-base px-7 py-3.5 rounded-xl transition-all hover:bg-white/90 shadow-lg hover:shadow-xl hover:scale-[1.02]"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Montar Pedido
+              </a>
+              <a
+                href="#como-funciona"
                 className="inline-flex items-center justify-center gap-2 bg-white/15 backdrop-blur-sm text-white font-semibold text-base px-7 py-3.5 rounded-xl transition-all hover:bg-white/25 border border-white/20"
               >
-                Ver Cardapio
+                Como Funciona
                 <ArrowRight className="w-4 h-4" />
               </a>
             </div>
@@ -248,53 +245,7 @@ export default function Storefront() {
         {!loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden group"
-              >
-                {/* Imagem */}
-                <div className="relative h-44 overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10">
-                  {product.image ? (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center">
-                      <UtensilsCrossed className="w-10 h-10 text-primary/30" />
-                    </div>
-                  )}
-                  <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-xl text-sm font-bold text-primary shadow-sm">
-                    {formatCurrency(product.price)}
-                  </div>
-                  {product.category && (
-                    <div className="absolute top-3 left-3 bg-gray-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[11px] font-medium text-white">
-                      {product.category.icon} {product.category.name}
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="p-5">
-                  <h3 className="font-bold text-gray-900 text-base mb-1 group-hover:text-primary transition-colors">
-                    {product.name}
-                  </h3>
-                  {product.description && (
-                    <p className="text-gray-500 text-sm mb-4 line-clamp-2 leading-relaxed">
-                      {product.description}
-                    </p>
-                  )}
-
-                  <button
-                    onClick={() => handleOrder(product)}
-                    className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1fba59] text-white font-semibold py-2.5 rounded-xl transition-all text-sm shadow-sm hover:shadow-md"
-                  >
-                    <WhatsAppIcon className="w-4 h-4" />
-                    Pedir no WhatsApp
-                  </button>
-                </div>
-              </div>
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         )}
@@ -313,7 +264,7 @@ export default function Storefront() {
       </section>
 
       {/* ============ COMO FUNCIONA ============ */}
-      <section className="bg-white border-t border-gray-100">
+      <section id="como-funciona" className="bg-white border-t border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl font-bold text-gray-900 mb-2">Como Funciona</h2>
@@ -325,20 +276,20 @@ export default function Storefront() {
               {
                 step: 1,
                 icon: ShoppingBag,
-                title: 'Escolha sua marmita',
-                desc: 'Navegue pelo cardapio e encontre o que mais te agrada',
+                title: 'Escolha suas marmitas',
+                desc: 'Navegue pelo cardapio e adicione ao carrinho o que mais te agrada',
               },
               {
                 step: 2,
-                icon: Smartphone,
-                title: 'Peca no WhatsApp',
-                desc: 'Clique no botao e nosso atendimento confirma tudo pra voce',
+                icon: ShoppingCart,
+                title: 'Monte seu pedido',
+                desc: 'Ajuste quantidades e revise seu pedido no carrinho antes de enviar',
               },
               {
                 step: 3,
                 icon: Truck,
                 title: 'Receba em casa',
-                desc: 'Entregamos quentinha na sua porta em ate 45 minutos',
+                desc: 'Envie pelo WhatsApp e entregamos quentinha em ate 45 minutos',
               },
             ].map((item) => (
               <div
@@ -370,15 +321,15 @@ export default function Storefront() {
             Pronto pra pedir?
           </h2>
           <p className="text-white/70 mb-8 max-w-md mx-auto">
-            Fale com a gente no WhatsApp e receba sua marmita quentinha em casa
+            Monte seu pedido no carrinho e envie pelo WhatsApp — simples e rapido!
           </p>
-          <button
-            onClick={handleOrderAll}
+          <a
+            href="#cardapio"
             className="inline-flex items-center gap-3 bg-white text-primary font-bold text-base px-8 py-4 rounded-xl transition-all hover:bg-white/90 shadow-lg hover:shadow-xl hover:scale-[1.02]"
           >
-            <WhatsAppIcon className="w-5 h-5" />
-            Chamar no WhatsApp
-          </button>
+            <ShoppingCart className="w-5 h-5" />
+            Ver Cardapio
+          </a>
         </div>
       </section>
 
@@ -426,13 +377,10 @@ export default function Storefront() {
                   <MapPin className="w-4 h-4 text-primary" />
                   Dourados, MS
                 </div>
-                <button
-                  onClick={handleOrderAll}
-                  className="flex items-center gap-2 text-[#25D366] hover:text-[#1fba59] transition-colors"
-                >
+                <div className="flex items-center gap-2 text-[#25D366]">
                   <WhatsAppIcon className="w-4 h-4" />
                   WhatsApp
-                </button>
+                </div>
               </div>
             </div>
           </div>
@@ -443,14 +391,93 @@ export default function Storefront() {
         </div>
       </footer>
 
-      {/* ============ FAB WHATSAPP MOBILE ============ */}
-      <button
-        onClick={handleOrderAll}
-        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-[#25D366] hover:bg-[#1fba59] text-white rounded-full shadow-xl hover:shadow-2xl transition-all hover:scale-110 sm:hidden"
-        aria-label="Pedir no WhatsApp"
-      >
-        <WhatsAppIcon className="w-6 h-6" />
-      </button>
+      {/* ============ FAB CARRINHO MOBILE ============ */}
+      {itemCount > 0 && (
+        <button
+          onClick={openCart}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-primary hover:bg-primary-dark text-white pl-4 pr-5 py-3.5 rounded-full shadow-xl hover:shadow-2xl transition-all hover:scale-105 sm:hidden"
+        >
+          <ShoppingCart className="w-5 h-5" />
+          <span className="font-bold text-sm">{itemCount}</span>
+        </button>
+      )}
+
+      {/* ============ CART DRAWER ============ */}
+      <CartDrawer />
+    </div>
+  );
+}
+
+/* ============ PRODUCT CARD ============ */
+function ProductCard({ product }) {
+  const { addItem, updateQuantity, getItemQuantity } = useCartStore();
+  const qty = useCartStore((s) => {
+    const item = s.items.find((i) => i.product.id === product.id);
+    return item ? item.quantity : 0;
+  });
+
+  return (
+    <div className="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden group">
+      {/* Imagem */}
+      <div className="relative h-44 overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10">
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center">
+            <UtensilsCrossed className="w-10 h-10 text-primary/30" />
+          </div>
+        )}
+        <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-xl text-sm font-bold text-primary shadow-sm">
+          {formatCurrency(product.price)}
+        </div>
+        {product.category && (
+          <div className="absolute top-3 left-3 bg-gray-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[11px] font-medium text-white">
+            {product.category.icon} {product.category.name}
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="p-5">
+        <h3 className="font-bold text-gray-900 text-base mb-1 group-hover:text-primary transition-colors">
+          {product.name}
+        </h3>
+        {product.description && (
+          <p className="text-gray-500 text-sm mb-4 line-clamp-2 leading-relaxed">
+            {product.description}
+          </p>
+        )}
+
+        {qty === 0 ? (
+          <button
+            onClick={() => addItem(product)}
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold py-2.5 rounded-xl transition-all text-sm shadow-sm hover:shadow-md"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Adicionar ao Carrinho
+          </button>
+        ) : (
+          <div className="flex items-center justify-between bg-primary/5 rounded-xl px-3 py-1.5">
+            <button
+              onClick={() => updateQuantity(product.id, qty - 1)}
+              className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-primary hover:text-primary transition-colors"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="text-base font-bold text-primary">{qty}</span>
+            <button
+              onClick={() => updateQuantity(product.id, qty + 1)}
+              className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center hover:bg-primary-dark transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
