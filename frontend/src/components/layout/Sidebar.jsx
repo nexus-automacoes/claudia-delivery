@@ -7,6 +7,7 @@ import {
   Truck,
   Send,
   MessageCircle,
+  Palette,
   LogOut,
   ChefHat,
   X,
@@ -21,6 +22,7 @@ const navItems = [
   { to: '/admin/clientes', label: 'Clientes', icon: Users },
   { to: '/admin/entregadores', label: 'Entregadores', icon: Truck },
   { to: '/admin/broadcast', label: 'Broadcast', icon: Send },
+  { to: '/admin/cardapio-arte', label: 'Arte Cardapio', icon: Palette },
   { to: '/admin/whatsapp', label: 'WhatsApp Bot', icon: MessageCircle, green: true },
 ];
 

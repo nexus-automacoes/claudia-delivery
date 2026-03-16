@@ -21,6 +21,9 @@ const whatsappRoutes = require('./routes/whatsapp.routes');
 // Import middleware
 const errorHandler = require('./middleware/errorHandler.middleware');
 
+// Cardapio Arte module
+const cardapioRoutes = require('../cardapio-arte/cardapio-routes');
+
 // Import services
 const { initScheduler } = require('./services/scheduler.service');
 const { initSocket } = require('./services/socket.service');
@@ -71,6 +74,12 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/broadcast', broadcastRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+
+// Cardapio Arte — gerador de arte do dia (disable helmet CSP for this route)
+app.use('/admin/cardapio', (req, res, next) => {
+  res.removeHeader('Content-Security-Policy');
+  next();
+}, cardapioRoutes);
 
 // Machine API webhook route
 app.post('/api/webhook/machine', deliveryController.webhookMachine);

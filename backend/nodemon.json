@@ -1,0 +1,5 @@
+{
+  "watch": ["src", "cardapio-arte"],
+  "ignore": ["cardapio-arte/cardapio_atual.json", "cardapio-arte/*.png"],
+  "ext": "js,html"
+}

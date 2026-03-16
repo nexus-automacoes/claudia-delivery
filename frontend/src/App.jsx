@@ -12,6 +12,7 @@ import Clientes from './pages/Clientes';
 import Entregadores from './pages/Entregadores';
 import Broadcast from './pages/Broadcast';
 import WhatsAppConnect from './pages/admin/WhatsAppConnect';
+import CardapioArte from './pages/CardapioArte';
 import useStore from './store/useStore';
 
 const queryClient = new QueryClient({
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="entregadores" element={<Entregadores />} />
             <Route path="broadcast" element={<Broadcast />} />
             <Route path="whatsapp" element={<WhatsAppConnect />} />
+            <Route path="cardapio-arte" element={<CardapioArte />} />
           </Route>
         </Routes>
       </BrowserRouter>
